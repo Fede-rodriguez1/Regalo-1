@@ -1,0 +1,202 @@
+:root {
+  --roll-h: 64px;
+  --overlap: 10px; /* cuánto tapa el rollo el borde del papel */
+}
+
+.is-closed,
+.is-closed body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--safe-top) + 28px) 16px calc(var(--safe-bottom) + 56px);
+}
+
+.scroll {
+  position: relative;
+  width: min(100%, 400px);
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+
+.is-ready .scroll { opacity: 1; }
+
+/* Estado cerrado: el rollo centrado en pantalla y el papel escondido. JS calcula las variables. */
+.is-closed .scroll { transform: translateY(var(--offset, 0px)); }
+.is-closed .sheet { clip-path: inset(0 0 100% 0); }
+.is-closed .roll { transform: translateY(calc(var(--shift, 0px) * -1)); }
+
+/* Papel: el pergamino se dibuja en el canvas (js/carta.js) para que tenga bordes rasgados y se adapte al alto */
+.sheet {
+  position: relative;
+  margin: 0 12px;
+  padding: 40px 30px calc(var(--overlap) + 40px);
+  color: var(--ink);
+}
+
+.sheet__paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.45));
+}
+
+.letter { position: relative; }
+
+/* Rollo: se dibuja en canvas (js/carta.js) con la misma textura que la hoja */
+.roll {
+  position: relative;
+  z-index: 2;
+  height: var(--roll-h);
+  margin-top: calc(var(--overlap) * -1);
+}
+
+.roll__paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 9px rgba(0, 0, 0, 0.5));
+}
+
+/* Sombra que el rollo proyecta sobre la hoja ya desenrollada */
+.roll::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 100%;
+  height: 16px;
+  background: linear-gradient(to top, rgba(50, 28, 8, 0.4), rgba(50, 28, 8, 0));
+  transition: opacity 0.4s;
+}
+
+.is-closed .roll::before { opacity: 0; }
+
+/* Grano que se desplaza mientras gira, para que se note que el rollo da vueltas */
+.roll__lines {
+  position: absolute;
+  inset: 6px 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .6' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .2 0 0 0 0 .08 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+}
+
+/* Cinta y moño */
+.ribbon {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 50%;
+  width: 30px;
+  height: var(--roll-h);
+  margin-left: -15px;
+  border-radius: 2px / 6px;
+  /* Encima: el mismo volumen del rollo, para que la cinta parezca envolverlo */
+  background:
+    linear-gradient(to bottom, rgba(20, 5, 40, 0.6), rgba(20, 5, 40, 0.1) 20%, rgba(255, 255, 255, 0.18) 36%, rgba(255, 255, 255, 0) 52%, rgba(20, 5, 40, 0.2) 78%, rgba(20, 5, 40, 0.65)),
+    linear-gradient(to right, var(--ribbon-dark), var(--ribbon) 30%, var(--ribbon-light) 50%, var(--ribbon) 70%, var(--ribbon-dark));
+  box-shadow: 0 0 5px rgba(40, 20, 5, 0.45);
+  transform-origin: top center;
+}
+
+.bow {
+  position: absolute;
+  z-index: 4;
+  top: calc(var(--roll-h) / 2);
+  left: 50%;
+  width: 156px;
+  height: 98px;
+  margin: -49px 0 0 -78px;
+}
+
+/* El moño se dibuja en canvas (js/mono.js). El canvas es más grande que el botón
+   para que entren las colas y la cinta cuando cae. El nudo queda en el centro del botón. */
+.bow__canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260px;
+  height: 300px;
+  margin: -114px 0 0 -130px;
+  pointer-events: none;
+}
+
+.tap-hint {
+  position: absolute;
+  top: calc(var(--roll-h) + 64px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-soft);
+  letter-spacing: 0.04em;
+  animation: titilar 2s ease-in-out infinite;
+}
+
+/* Una vez abierta: el moño (invisible) no tapa el texto y el rollo se puede tocar para cerrar */
+.is-open .bow { pointer-events: none; }
+.is-open .roll { cursor: pointer; }
+
+.close-hint {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.is-open .close-hint { opacity: 0.8; }
+
+@keyframes titilar {
+  50% { opacity: 0.35; }
+}
+
+/* Texto de la carta */
+.letter {
+  font-family: 'Caveat', cursive;
+  font-size: 1.5rem;
+  line-height: 1.35;
+  text-shadow: 0 0 1px rgba(58, 38, 20, 0.35);
+}
+
+.letter__title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(1.9rem, 8vw, 2.3rem);
+  line-height: 1.1;
+  color: var(--ribbon-dark);
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.letter__to {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.letter__p + .letter__p { margin-top: 14px; }
+
+/* Cada palabra es un bloque para que se pueda "escribir" de izquierda a derecha (js/carta.js) */
+.letter .w { display: inline-block; }
+
+.letter__bye { margin-top: 26px; }
+
+.letter__sign {
+  font-weight: 700;
+  font-size: 1.9rem;
+  text-align: right;
+  color: var(--ribbon-dark);
+}
+

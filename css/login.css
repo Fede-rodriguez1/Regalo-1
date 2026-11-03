@@ -1,0 +1,259 @@
+.login {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: calc(var(--safe-top) + 24px) 24px calc(var(--safe-bottom) + 24px);
+  text-align: center;
+  overflow-x: clip; /* el canvas de la vela desborda su caja hacia los costados */
+}
+
+/* Vela */
+.vela {
+  position: relative;
+  margin-bottom: 6px;
+}
+
+/* Alta y angosta como la vela, y lo más grande que permita la pantalla sin empujar el formulario */
+.vela vela-espiral {
+  height: clamp(220px, 36dvh, 360px);
+  width: auto;
+  aspect-ratio: 3 / 5;
+}
+
+/* Penumbra: con la vela prendida todo queda a oscuras salvo lo que alcanza la luz de la llama.
+   --fx/--fy (posición de la llama) y --luz (intensidad que titila) los actualiza js/login.js */
+.penumbra {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--fx, 50%) var(--fy, 25%),
+    rgba(6, 3, 14, 0) 0,
+    rgba(6, 3, 14, 0.22) 12vmax,
+    rgba(6, 3, 14, 0.6) 32vmax,
+    rgba(6, 3, 14, 0.88) 60vmax);
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+/* Resplandor cálido de la llama sobre la página */
+.penumbra::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--fx, 50%) var(--fy, 25%),
+    rgba(255, 160, 70, 0.2) 0,
+    rgba(255, 120, 40, 0.07) 16vmax,
+    rgba(255, 120, 40, 0) 38vmax);
+  opacity: var(--luz, 0);
+}
+
+body.is-lit .penumbra { opacity: 1; }
+
+/* Globo de los deseos, estilo vidrio líquido. Sale de la llama hacia el costado (--llama-x/y desde js/login.js). */
+.deseos {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--llama-x, 50%) + 22px);
+  top: max(calc(var(--llama-y, 30%) - 14px), 8px);
+  width: max-content;
+  max-width: min(210px, calc(100vw - var(--globo-x, 50vw) - 22px - 14px));
+  padding: 12px 16px 12px;
+  border-radius: 6px 22px 22px 22px;
+  text-align: left;
+  color: #fff7ee;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.06) 50%, rgba(255, 180, 110, 0.12));
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 20px rgba(255, 200, 140, 0.1),
+    0 14px 34px -10px rgba(0, 0, 0, 0.6),
+    0 0 30px -8px rgba(255, 160, 80, 0.45);
+  opacity: 0;
+  transform: translate(-10px, -4px) scale(0.5);
+  transform-origin: 0 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.deseos.is-visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.4s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Reflejo especular del vidrio */
+.deseos::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(130% 70% at 18% 0%, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
+}
+
+.deseos__titulo {
+  position: relative;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.deseos__texto {
+  position: relative;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(255, 247, 238, 0.82);
+}
+
+.deseos__estrellas {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-style: normal;
+  color: #ffd59a;
+}
+
+.deseos__estrellas i {
+  font-style: normal;
+  text-shadow: 0 0 8px rgba(255, 190, 110, 0.9);
+  animation: titilar 1.8s ease-in-out infinite;
+}
+
+.deseos__estrellas i:nth-child(2) { animation-delay: 0.3s; }
+.deseos__estrellas i:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes titilar {
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Textos */
+.login__title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 9vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.login__title em {
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.login__sub {
+  color: var(--text-soft);
+  margin-bottom: 18px;
+}
+
+/* Formulario */
+.login__form {
+  width: min(100%, 340px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Bloqueado hasta que soplen la vela (js/login.js) */
+.login__form,
+.login__hint { transition: opacity 0.5s ease, filter 0.5s ease; }
+
+.login__form[inert],
+.login__hint[inert] {
+  opacity: 0.45;
+  filter: saturate(0.5);
+}
+
+.login__form.shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+@keyframes shake {
+  20%, 60% { transform: translateX(-10px); }
+  40%, 80% { transform: translateX(10px); }
+}
+
+.field { position: relative; }
+
+.field input {
+  width: 100%;
+  height: 56px;
+  padding: 0 54px 0 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 18px; /* 16px o más evita el zoom automático de iOS */
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.field input::placeholder { color: rgba(248, 242, 255, 0.45); }
+
+.field input:focus {
+  border-color: var(--accent-2);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.field__eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 54px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  color: var(--text-soft);
+}
+
+.field__eye-off { opacity: 1; transition: opacity 0.2s; }
+.field__eye[aria-pressed='true'] .field__eye-off { opacity: 0; }
+
+.btn {
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #1e0f36;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 30px -10px rgba(166, 107, 255, 0.7);
+  transition: transform 0.15s ease;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.login__msg {
+  min-height: 1.5em;
+  color: #e2b8ff;
+  font-weight: 600;
+}
+
+.login__msg.is-hint { color: var(--accent-2); }
+.is-unlocked .login__msg { color: #9ff0c9; }
+
+.login__hint {
+  padding: 10px 14px;
+  color: var(--text-soft);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 0.95rem;
+}
+
+.login__hint.is-highlight { color: var(--accent-2); animation: latir 1.4s ease-in-out infinite; }
+
+@keyframes latir {
+  50% { transform: scale(1.06); }
+}
